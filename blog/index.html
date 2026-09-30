@@ -6,9 +6,66 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+
     <title>Blog · Acme Corp</title>
+
     <link rel="stylesheet" href="/common.css" />
+
+    <style>
+      .blog-list {
+        margin-top: 30px;
+      }
+
+      .blog-post {
+        padding: 24px 0;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .blog-post:first-child {
+        padding-top: 0;
+      }
+
+      .blog-title {
+        margin: 0 0 8px;
+        font-size: 26px;
+      }
+
+      .blog-title a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .blog-title a:hover {
+        text-decoration: underline;
+      }
+
+      .blog-date {
+        margin: 0 0 14px;
+        color: #777;
+        font-size: 14px;
+      }
+
+      .blog-content-text {
+        margin: 0 0 16px;
+        line-height: 1.6;
+      }
+
+      .blog-original {
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .blog-original:hover {
+        text-decoration: underline;
+      }
+
+      .blog-empty {
+        color: #777;
+      }
+    </style>
   </head>
+
   <body>
     <header id="site-header"></header>
 
@@ -16,15 +73,98 @@
       <div id="app">
         <div>
           <h1 class="page-title">Blog</h1>
-          <p class="blog-content">
-            No posts yet. Add one in
-            <a href="/studio/" class="underline-link">the Studio</a>.
-          </p>
+
+          <div id="blog-list" class="blog-list">
+            <p class="blog-empty">Loading posts...</p>
+          </div>
         </div>
       </div>
     </main>
 
     <footer>© 2026 Acme Corp. All rights reserved.</footer>
+
+    <script>
+      const blogList = document.getElementById("blog-list");
+
+      fetch("http://127.0.0.1:8000/api/blog")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to load blog posts");
+          }
+
+          return response.json();
+        })
+        .then((posts) => {
+          if (posts.length === 0) {
+            blogList.innerHTML = `
+              <p class="blog-empty">
+                No posts yet.
+              </p>
+            `;
+            return;
+          }
+
+          // Sort by published date: newest first
+          posts.sort(
+            (a, b) => new Date(b.published_at) - new Date(a.published_at),
+          );
+
+          blogList.innerHTML = posts
+            .map((post) => {
+              const date = new Date(post.published_at);
+
+              const formattedDate = date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+
+              return `
+                <article class="blog-post">
+
+                  <h2 class="blog-title">
+                    <a
+                      href="${post.slug}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      ${post.title}
+                    </a>
+                  </h2>
+
+                  <p class="blog-date">
+                    Published ${formattedDate}
+                  </p>
+
+                  <p class="blog-content-text">
+                    ${post.content || ""}
+                  </p>
+
+                  <a
+                    class="blog-original"
+                    href="${post.slug}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Read original →
+                  </a>
+
+                </article>
+              `;
+            })
+            .join("");
+        })
+        .catch((error) => {
+          console.error(error);
+
+          blogList.innerHTML = `
+            <p class="blog-empty">
+              Failed to load blog posts.
+            </p>
+          `;
+        });
+    </script>
+
     <script src="/nav.js"></script>
   </body>
 </html>

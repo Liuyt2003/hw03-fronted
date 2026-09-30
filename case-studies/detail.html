@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Case Study · Acme Corp</title>
+    <link rel="stylesheet" href="/common.css" />
+  </head>
+
+  <body>
+    <header id="site-header"></header>
+
+    <main>
+      <div id="app">
+        <article class="case-detail">
+          <div class="case-detail-head">
+            <h1 class="page-title" id="case-title"></h1>
+
+            <span class="badge" id="case-gated" style="display: none">
+              Gated
+            </span>
+          </div>
+
+          <p class="intro-text" id="case-description"></p>
+
+          <div class="case-detail-body" id="case-body"></div>
+        </article>
+      </div>
+    </main>
+
+    <footer>© 2026 Acme Corp. All rights reserved.</footer>
+
+    <script>
+      const title = document.getElementById("case-title");
+      const description = document.getElementById("case-description");
+      const body = document.getElementById("case-body");
+      const gated = document.getElementById("case-gated");
+
+      // Get slug from the URL
+      // Example:
+      // detail.html?slug=first-one
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("slug");
+
+      if (!slug) {
+        title.textContent = "Case Study Not Found";
+
+        description.textContent = "No case study was specified.";
+
+        body.innerHTML = `
+          <p>
+            Please select a case study from the Case Studies page.
+          </p>
+        `;
+      } else {
+        fetch(
+          `http://127.0.0.1:8000/api/case-studies/${encodeURIComponent(slug)}`,
+        )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Case study not found");
+            }
+
+            return response.json();
+          })
+          .then((study) => {
+            document.title = `${study.title} · Acme Corp`;
+
+            title.textContent = study.title;
+
+            description.textContent = study.description;
+
+            body.innerHTML = `
+              <p>${study.body || ""}</p>
+            `;
+
+            if (study.gated) {
+              gated.style.display = "inline-block";
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+
+            title.textContent = "Case Study Not Found";
+
+            description.textContent = "";
+
+            body.innerHTML = `
+              <p>
+                Sorry, this case study could not be found.
+              </p>
+            `;
+          });
+      }
+    </script>
+
+    <script src="/nav.js"></script>
+  </body>
+</html>

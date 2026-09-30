@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -26,40 +25,57 @@
 
     <footer>© 2026 Acme Corp. All rights reserved.</footer>
 
-    <script src="./data.js"></script>
-
     <script>
       const caseList = document.getElementById("case-list");
 
-      if (caseStudies.length === 0) {
-        caseList.innerHTML = `
-      <li class="case-empty">
-        No case studies yet.
-      </li>
-    `;
-      } else {
-        caseList.innerHTML = caseStudies
-          .map((study) => {
-            return `
-          <li class="case-item">
-            <div class="case-item-head">
-              <h2 class="case-item-title">
-                <a href="/case-studies/${study.slug}/">
-                  ${study.title}
-                </a>
-              </h2>
+      fetch("http://127.0.0.1:8000/api/case-studies")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to load case studies");
+          }
 
-              ${study.gated ? `<span class="badge">Gated</span>` : ""}
-            </div>
+          return response.json();
+        })
+        .then((caseStudies) => {
+          if (caseStudies.length === 0) {
+            caseList.innerHTML = `
+              <li class="case-empty">
+                No case studies yet.
+              </li>
+            `;
+          } else {
+            caseList.innerHTML = caseStudies
+              .map((study) => {
+                return `
+                  <li class="case-item">
+                    <div class="case-item-head">
+                      <h2 class="case-item-title">
+                        <a href="/case-studies/detail.html?slug=${encodeURIComponent(study.slug)}">
+                          ${study.title}
+                        </a>
+                      </h2>
 
-            <p class="case-desc">
-              ${study.description}
-            </p>
-          </li>
-        `;
-          })
-          .join("");
-      }
+                      ${study.gated ? `<span class="badge">Gated</span>` : ""}
+                    </div>
+
+                    <p class="case-desc">
+                      ${study.description}
+                    </p>
+                  </li>
+                `;
+              })
+              .join("");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+
+          caseList.innerHTML = `
+            <li class="case-empty">
+              Failed to load case studies.
+            </li>
+          `;
+        });
     </script>
 
     <script src="/nav.js"></script>
